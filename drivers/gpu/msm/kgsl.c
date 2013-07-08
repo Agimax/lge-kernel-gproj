@@ -1253,10 +1253,12 @@ kgsl_sharedmem_find_id(struct kgsl_process_private *process, unsigned int id)
 static inline bool kgsl_mem_entry_set_pend(struct kgsl_mem_entry *entry)
 {
 	bool ret = false;
+
+	if (entry == NULL)
+		return false;
+
 	spin_lock(&entry->priv->mem_lock);
-	if (entry && entry->pending_free) {
-		ret = false;
-	} else if (entry) {
+	if (!entry->pending_free) {
 		entry->pending_free = 1;
 		ret = true;
 	}
@@ -3569,7 +3571,7 @@ kgsl_get_unmapped_area(struct file *file, unsigned long addr,
 			 */
 			if (!retry && (ret == (unsigned long)-ENOMEM)
 				&& (align > PAGE_SHIFT)) {
-				align = PAGE_SHIFT;
+				align = 0;
 				addr = 0;
 				len = orig_len;
 				retry = 1;
@@ -3630,7 +3632,7 @@ kgsl_get_unmapped_area(struct file *file, unsigned long addr,
 	} while (mmap_range_valid(addr, len));
 
 	if (IS_ERR_VALUE(ret))
-		KGSL_MEM_INFO(device,
+		KGSL_MEM_ERR(device,
 				"pid %d pgoff %lx len %ld failed error %ld\n",
 				private->pid, pgoff, len, ret);
 put:

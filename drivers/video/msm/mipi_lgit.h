@@ -11,7 +11,7 @@
  *       copyright notice, this list of conditions and the following
  *       disclaimer in the documentation and/or other materials provided
  *       with the distribution.
- *     * Neither the name of The Linux Foundation nor the names of its
+ *     * Neither the name of Code Aurora Forum, Inc. nor the names of its
  *       contributors may be used to endorse or promote products derived
  *       from this software without specific prior written permission.
  *
@@ -42,4 +42,5 @@ int mipi_lgit_lcd_off_for_shutdown(void);
 int mipi_lgit_lcd_ief_off(void);
 int mipi_lgit_lcd_ief_on(void);
 //LGE_UPDATE_E hojin.ryu@lge.com 20121107
+
 #endif  /* MIPI_LGIT_H */
