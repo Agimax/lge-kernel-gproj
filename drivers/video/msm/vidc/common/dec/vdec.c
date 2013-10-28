@@ -1625,6 +1625,8 @@ static u32 vid_dec_start_stop(struct video_client_ctx *client_ctx, u32 start)
 				return false;
 			}
 		}
+
+		client_ctx->stop_called = false;
 	} else {
 		DBG("%s(): Calling vcd_stop()", __func__);
 		mutex_lock(&vid_dec_device_p->lock);
@@ -2601,7 +2603,7 @@ int vid_dec_open_client(struct video_client_ctx **vid_clnt_ctx, int flags)
 	}
 
 	client_index = vid_dec_get_empty_client_index();
-	if (client_index == -1) {
+	if (client_index < 0) {
 		ERR("%s() : No free clients client_index == -1\n", __func__);
 		rc = -ENOMEM;
 		goto client_failure;
@@ -2647,7 +2649,7 @@ client_failure:
 
 static int vid_dec_open_secure(struct inode *inode, struct file *file)
 {
-	int rc = 0;
+	int rc = 0, close_client = 0;
 	struct video_client_ctx *client_ctx;
 	mutex_lock(&vid_dec_device_p->lock);
 	rc = vid_dec_open_client(&client_ctx, VCD_CP_SESSION);
@@ -2661,6 +2663,9 @@ static int vid_dec_open_secure(struct inode *inode, struct file *file)
 	file->private_data = client_ctx;
 	if (res_trk_open_secure_session()) {
 		ERR("Secure session operation failure\n");
+		close_client = 1;
+		client_ctx->stop_called = 1;
+		client_ctx->stop_sync_cb = 1;
 		rc = -EACCES;
 		goto error;
 	}
@@ -2668,6 +2673,8 @@ static int vid_dec_open_secure(struct inode *inode, struct file *file)
 	return 0;
 error:
 	mutex_unlock(&vid_dec_device_p->lock);
+	if (close_client)
+		vid_dec_close_client(client_ctx);
 	return rc;
 }
 

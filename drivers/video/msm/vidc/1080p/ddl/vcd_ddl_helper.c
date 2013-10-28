@@ -412,8 +412,6 @@ void ddl_release_client_internal_buffers(struct ddl_client_context *ddl)
 		ddl_free_enc_hw_buffers(ddl);
 		ddl_free_ltr_list(&encoder->ltr_control);
 	}
-	ddl_pmem_free(&ddl->shared_mem[0]);
-	ddl_pmem_free(&ddl->shared_mem[1]);
 }
 
 u32 ddl_codec_type_transact(struct ddl_client_context *ddl,
@@ -513,6 +511,8 @@ u32 ddl_get_yuv_buf_size(u32 width, u32 height, u32 format)
 
 	width_round_up  = width;
 	height_round_up = height;
+	align = SZ_4K;
+
 	if (format == DDL_YUV_BUF_TYPE_TILE) {
 		width_round_up  = DDL_ALIGN(width, DDL_TILE_ALIGN_WIDTH);
 		height_round_up = DDL_ALIGN(height, DDL_TILE_ALIGN_HEIGHT);
@@ -826,13 +826,13 @@ u32 ddl_calc_enc_hw_buffers_size(enum vcd_codec codec, u32 width,
 		height, DDL_YUV_BUF_TYPE_TILE);
 	sz_dpb_c = ddl_get_yuv_buf_size(width, height>>1,
 		DDL_YUV_BUF_TYPE_TILE);
-	if (input_format ==
-		VCD_BUFFER_FORMAT_NV12_16M2KA) {
+	if ((input_format == VCD_BUFFER_FORMAT_NV12_16M2KA) ||
+		(input_format == VCD_BUFFER_FORMAT_NV21_16M2KA)) {
 		sz_cur_y = ddl_get_yuv_buf_size(width, height,
 			DDL_YUV_BUF_TYPE_LINEAR);
 		sz_cur_c = ddl_get_yuv_buf_size(width, height>>1,
 			DDL_YUV_BUF_TYPE_LINEAR);
-	} else if (VCD_BUFFER_FORMAT_TILE_4x2 == input_format) {
+	} else if (input_format == VCD_BUFFER_FORMAT_TILE_4x2) {
 		sz_cur_y = sz_dpb_y;
 		sz_cur_c = sz_dpb_c;
 	} else
